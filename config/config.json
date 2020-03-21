@@ -1,0 +1,20 @@
+{
+  "config": "", /*This will override the current config*/
+  "MQTT":{
+    "host": "127.0.0.1",
+    "port": 1883,
+    "username": "nimmain",
+    "password": "password",
+    "topic": "nordnet",
+    "ssl": false,
+    "clientname": "nordnet"
+ },
+  "nordnet":{
+    "refreshTime": 900,
+    "waitBetweenCalls": 2,
+    "urls": [
+      "16321743-alibaba-group-holding",
+      "16256554-novo-nordisk-b"
+    ]
+  }
+}
