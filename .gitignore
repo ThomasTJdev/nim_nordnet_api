@@ -1,3 +1,6 @@
 nimcache/
 nimblecache/
 htmldocs/
+test/tester
+nordnet
+config/config_private.json
