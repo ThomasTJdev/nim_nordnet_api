@@ -1,0 +1,15 @@
+
+[Unit]
+Description=Nordnet
+After=network.target
+
+[Service]
+ExecStart=/home/pi/git/nim_nordnet_api/nordnet
+WorkingDirectory=/home/pi/git/nim_nordnet_api/
+StandardOutput=inherit
+StandardError=inherit
+Restart=always
+User=pi
+
+[Install]
+WantedBy=multi-user.target
