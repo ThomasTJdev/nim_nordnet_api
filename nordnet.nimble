@@ -1,5 +1,5 @@
 # Package
-version       = "0.0.1"
+version       = "0.0.2"
 author        = "Thomas T. Jarløv (https://github.com/ThomasTJdev)"
 description   = "Scraping API for www.nordnet.dk"
 license       = "MIT"
