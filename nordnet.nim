@@ -1,7 +1,6 @@
 # Copyright 2020 - Thomas T. Jarløv
 
 import httpClient, json, strutils, nmqtt, asyncdispatch, times, os
-import nmqtt
 import q, xmltree, re
 
 type
@@ -226,7 +225,7 @@ proc apiRun*() {.async.} =
       await apiGetData(ctx, url)
       await sleepAsync(nordnetapi.wait * 1000)
 
-  await ctx.close()
+  await ctx.disconnect()
 
 
 when isMainModule:
