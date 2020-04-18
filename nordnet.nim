@@ -46,7 +46,7 @@ const
   baseUrl   = baseUrlDK
 
   discoveryTopic  = "home/sensor/nordnet/stock_"
-  discovery       = """{"name": "$1", "state_topic": "home/sensor/nordnet/stock_$1",  "value_template": "{{ value_json['$1']['priceLatest']}}"}"""
+  discovery       = """{"name": "$1", "icon": "mdi:chart-line", "state_topic": "home/sensor/nordnet/stock_$1",  "value_template": "{{ value_json['$1']['priceLatest']}}"}"""
 
 
 proc nordnetConfig*(configPath = "config/config.json") =
