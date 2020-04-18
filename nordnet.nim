@@ -203,7 +203,7 @@ proc apiGetData(ctx: MqttCtx, url: string, autoDiscover=false) {.async.} =
     nameRaw = split(url, "-")[1]
 
   if autoDiscover:
-    await ctx.publish(discoveryTopic & nameRaw & "/config", discovery.format(nameRaw, name), 0, false)
+    await ctx.publish(discoveryTopic & nameRaw & "/config", discovery.format(nameRaw, name), 0, true)
     await sleepAsync(3000)
 
   let nn = nordnetData(name, url)
