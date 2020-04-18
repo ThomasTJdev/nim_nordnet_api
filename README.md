@@ -15,7 +15,7 @@ Well, this is a simple scraper. You provide the URL to the stock, and this littl
 You can use this library in 3 ways:
 1. Normal library, either by cloning the repo or installing with Nimble
 2. CLI tool which outputs the data to the console
-3. Home Assistant "plugin" to serve data to your dashboard
+3. Home Assistant "plugin" to serve data to your dashboard with automatic adding of sensors
 
 ## What not to do
 You should absolutely not set the scraping interval to low (!!). This is **not** an API provided by Nordnet, so please use.
@@ -38,7 +38,7 @@ Now grab the last part of the url, which is what you need:
 You can provide multiple URLs, so repeat the above until satisfied.
 
 
-## Normal library
+# Normal library
 
 ```nim
 import nordnet
@@ -48,23 +48,23 @@ echo nordnetJson(nnObject) # JsonNode
 ```
 
 
-## CLI
+# CLI tool
 Just find the url path and run:
 ```bash
 $ nim c -d:ssl -d:release nordnet.nim
 $ ./nordnet 16256554-novo-nordisk-b
 ```
 
-## Home Assistant
+# Home Assistant
 The following is for implementing the data in [https://www.home-assistant.io/](https://www.home-assistant.io/).
 
-### Compile
+## Compile
 First compile the file:
 ```nim
 nim c -d:ssl -d:release nordnet.nim
 ```
 
-### Config file
+## Config file
 Then edit the config file, `config.json`, to your needs.
 
 If you need to place your config file elsewhere, just edit the `"config"` path. Otherwise leave blank.
@@ -72,7 +72,7 @@ If you need to place your config file elsewhere, just edit the `"config"` path. 
 nano config/config.json
 ```
 
-### Auto run
+## Auto run
 Now adjust the service file and deploy for autorun:
 ```nim
 nano nordnet.service
@@ -81,6 +81,12 @@ sudo systemctl enable nordnet
 sudo systemctl start nordnet
 sudo systemctl status nordnet
 ```
+
+## Add as sensor to Home Assistant
+
+As default the stocks will automatic be added as sensors named `sensor.stock_{stockname}`. So just run it, and you can directly after add the sensors to your lovelace frontpage.
+
+If you **dont** want the sensors added automatic, then set the `autodiscover: false` in the `config.json` - but then you have to add them manually, see the example with Node red below.
 
 ### Node red
 
