@@ -46,7 +46,7 @@ const
   baseUrl   = baseUrlDK
 
   discoveryTopic  = "home/sensor/nordnet/stock_"
-  discovery       = """{"name": "$1", "icon": "mdi:chart-line", "state_topic": "home/sensor/nordnet/stock_$1",  "value_template": "{{ value_json['$1']['priceLatest']}}"}"""
+  discovery       = """{"name": "$2", "icon": "mdi:chart-line", "unique_id": "stock_$1", "state_topic": "home/sensor/nordnet/stock_$1",  "value_template": "{{ value_json['$2']['priceLatest']}}"}"""
 
 
 proc nordnetConfig*(configPath = "config/config.json") =
@@ -198,10 +198,12 @@ proc nordnetJson*(nn: Nordnet): JsonNode =
 
 proc apiGetData(ctx: MqttCtx, url: string, autoDiscover=false) {.async.} =
 
-  let name = split(url, "-")[1].capitalizeAscii()
+  let
+    name    = split(url, "-")[1].capitalizeAscii()
+    nameRaw = split(url, "-")[1]
 
   if autoDiscover:
-    await ctx.publish(discoveryTopic & name & "/config", discovery.format(name), 0, false)
+    await ctx.publish(discoveryTopic & nameRaw & "/config", discovery.format(nameRaw, name), 0, false)
     await sleepAsync(3000)
 
   let nn = nordnetData(name, url)
@@ -209,9 +211,9 @@ proc apiGetData(ctx: MqttCtx, url: string, autoDiscover=false) {.async.} =
   let json = nordnetJson(nn)
 
   if autoDiscover:
-    await ctx.publish(discoveryTopic & name, $json, 2, true)
+    await ctx.publish(discoveryTopic & nameRaw, $json, 0, false)
   else:
-    await ctx.publish(mqttInfo.topic & "/" & name, $json, 2, true)
+    await ctx.publish(mqttInfo.topic & "/" & name, $json, 0, false)
 
 
 proc apiRun*() {.async.} =
@@ -221,8 +223,6 @@ proc apiRun*() {.async.} =
   ## will start.
 
   nordnetConfig()
-  echo mqttInfo
-  echo nordnetapi
 
   let ctx = newMqttCtx(mqttInfo.clientname)
   ctx.set_auth(mqttInfo.username, mqttInfo.password)
