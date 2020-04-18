@@ -18,10 +18,12 @@ You can use this library in 3 ways:
 3. Home Assistant "plugin" to serve data to your dashboard with automatic adding of sensors
 
 ## What not to do
-You should absolutely not set the scraping interval to low (!!). This is **not** an API provided by Nordnet, so please use.
+You should absolutely not set the scraping interval too low (!!). This is **not** an API provided by Nordnet, so please use it with care for Nordnets servers.
 
 ## What's next?
 Nothing. Nordnet properly changes their div-structure on monday, and then the scraping is failing.
+
+_Currently been working for a month..._
 
 # How to use it
 
