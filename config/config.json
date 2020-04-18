@@ -7,8 +7,9 @@
     "password": "password",
     "topic": "nordnet",
     "ssl": false,
-    "clientname": "nordnet"
- },
+    "clientname": "nordnet",
+    "autodiscover": true
+  },
   "nordnet":{
     "refreshTime": 900,
     "waitBetweenCalls": 2,

@@ -12,6 +12,7 @@ type
     topic*: string
     ssl*: bool
     clientname*: string
+    autodiscover*: bool
 
   Nordnetapi* = object
     urls*: seq[string]
@@ -39,10 +40,13 @@ var
 
 const
   baseUrlDK = "https://www.nordnet.dk/markedet/aktiekurser/"
-  baseUrlSE = "https://www.nordnet.se/marknaden/aktiekurser/"
-  baseUrlNO = "https://www.nordnet.no/market/stocks/"
-  baseUrlFI = "https://www.nordnet.fi/markkinakatsaus/osakekurssit/"
+  #baseUrlSE = "https://www.nordnet.se/marknaden/aktiekurser/"
+  #baseUrlNO = "https://www.nordnet.no/market/stocks/"
+  #baseUrlFI = "https://www.nordnet.fi/markkinakatsaus/osakekurssit/"
   baseUrl   = baseUrlDK
+
+  discoveryTopic  = "home/sensor/nordnet/stock_"
+  discovery       = """{"name": "$1", "state_topic": "home/sensor/nordnet/stock_$1",  "value_template": "{{ value_json['$1']['priceLatest']}}"}"""
 
 
 proc nordnetConfig*(configPath = "config/config.json") =
@@ -59,13 +63,14 @@ proc nordnetConfig*(configPath = "config/config.json") =
     mqtt = config["MQTT"]
     nn   = config["nordnet"]
 
-  mqttInfo.host       = mqtt["host"].getStr()
-  mqttInfo.port       = mqtt["port"].getInt()
-  mqttInfo.username   = mqtt["username"].getStr()
-  mqttInfo.password   = mqtt["password"].getStr()
-  mqttInfo.topic      = mqtt["topic"].getStr()
-  mqttInfo.ssl        = mqtt["ssl"].getBool()
-  mqttInfo.clientname = mqtt["clientname"].getStr()
+  mqttInfo.host         = mqtt["host"].getStr()
+  mqttInfo.port         = mqtt["port"].getInt()
+  mqttInfo.username     = mqtt["username"].getStr()
+  mqttInfo.password     = mqtt["password"].getStr()
+  mqttInfo.topic        = mqtt["topic"].getStr()
+  mqttInfo.ssl          = mqtt["ssl"].getBool()
+  mqttInfo.clientname   = mqtt["clientname"].getStr()
+  mqttInfo.autodiscover = mqtt["autodiscover"].getBool()
 
   for url in nn["urls"]:
     nordnetapi.urls.add(url.getStr())
@@ -191,14 +196,22 @@ proc nordnetJson*(nn: Nordnet): JsonNode =
   return json
 
 
-proc apiGetData(ctx: MqttCtx, url: string) {.async.} =
+proc apiGetData(ctx: MqttCtx, url: string, autoDiscover=false) {.async.} =
 
   let name = split(url, "-")[1].capitalizeAscii()
+
+  if autoDiscover:
+    await ctx.publish(discoveryTopic & name & "/config", discovery.format(name), 0, false)
+    await sleepAsync(3000)
+
   let nn = nordnetData(name, url)
 
   let json = nordnetJson(nn)
 
-  await ctx.publish(mqttInfo.topic & "/" & name, $json, 2, true)
+  if autoDiscover:
+    await ctx.publish(discoveryTopic & name, $json, 2, true)
+  else:
+    await ctx.publish(mqttInfo.topic & "/" & name, $json, 2, true)
 
 
 proc apiRun*() {.async.} =
@@ -208,15 +221,18 @@ proc apiRun*() {.async.} =
   ## will start.
 
   nordnetConfig()
+  echo mqttInfo
+  echo nordnetapi
 
   let ctx = newMqttCtx(mqttInfo.clientname)
   ctx.set_auth(mqttInfo.username, mqttInfo.password)
   ctx.set_host(mqttInfo.host, mqttInfo.port, mqttInfo.ssl)
   ctx.set_ping_interval(60)
   await ctx.start()
+  await sleepAsync(3000)
 
   for url in nordnetapi.urls:
-    await apiGetData(ctx, url)
+    await apiGetData(ctx, url, mqttInfo.autodiscover)
     await sleepAsync(nordnetapi.wait * 1000)
 
   while true:
