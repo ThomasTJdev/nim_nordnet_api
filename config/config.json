@@ -7,8 +7,12 @@
     "password": "password",
     "topic": "nordnet",
     "ssl": false,
-    "clientname": "nordnet",
-    "autodiscover": true
+    "clientname": "nordnet"
+  },
+  "HASS": {
+    "autodiscover": true,
+    "birthTopic": "hass/status",
+    "birthPayload": "online"
   },
   "nordnet":{
     "refreshTime": 900,

@@ -88,6 +88,8 @@ sudo systemctl status nordnet
 
 As default the stocks will automatic be added as sensors named `sensor.stock_{stockname}`. So just run it, and you can directly after add the sensors to your lovelace frontpage.
 
+A birth message is also supported - if Hass restarts, the config needs to be resend, otherwise the sensor will be inactive. You can setup a birth topic and birth payload inside Hass, which will be send on each boot - we are using that payload to resend the sensors configuration.
+
 If you **dont** want the sensors added automatic, then set the `autodiscover: false` in the `config.json` - but then you have to add them manually, see the example with Node red below.
 
 ### Node red

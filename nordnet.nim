@@ -12,7 +12,11 @@ type
     topic*: string
     ssl*: bool
     clientname*: string
-    autodiscover*: bool
+
+  Hass* = object
+    autoDiscover*: bool
+    birthTopic*: string
+    birthPayload*: string
 
   Nordnetapi* = object
     urls*: seq[string]
@@ -37,6 +41,7 @@ type
 var
   mqttInfo*: MqttInfo
   nordnetapi*: Nordnetapi
+  hass*: Hass
 
 const
   baseUrlDK = "https://www.nordnet.dk/markedet/aktiekurser/"
@@ -62,6 +67,7 @@ proc nordnetConfig*(configPath = "config/config.json") =
   let
     mqtt = config["MQTT"]
     nn   = config["nordnet"]
+    ha   = config["HASS"]
 
   mqttInfo.host         = mqtt["host"].getStr()
   mqttInfo.port         = mqtt["port"].getInt()
@@ -70,7 +76,10 @@ proc nordnetConfig*(configPath = "config/config.json") =
   mqttInfo.topic        = mqtt["topic"].getStr()
   mqttInfo.ssl          = mqtt["ssl"].getBool()
   mqttInfo.clientname   = mqtt["clientname"].getStr()
-  mqttInfo.autodiscover = mqtt["autodiscover"].getBool()
+
+  hass.autoDiscover     = ha["autodiscover"].getBool()
+  hass.birthTopic       = ha["birthTopic"].getStr()
+  hass.birthPayload     = ha["birthPayload"].getStr()
 
   for url in nn["urls"]:
     nordnetapi.urls.add(url.getStr())
@@ -204,7 +213,7 @@ proc apiGetData(ctx: MqttCtx, url: string, autoDiscover=false) {.async.} =
 
   if autoDiscover:
     await ctx.publish(discoveryTopic & nameRaw & "/config", discovery.format(nameRaw, name), 0, true)
-    await sleepAsync(3000)
+    await sleepAsync(1000)
 
   let nn = nordnetData(name, url)
 
@@ -231,8 +240,22 @@ proc apiRun*() {.async.} =
   await ctx.start()
   await sleepAsync(3000)
 
+  proc rediscoverOnHassRestart(topic, message: string) =
+    ## This will resend the config for the devices, when it receives
+    ## Hassio birth message. This message needs to be setup through
+    ## Hassio automation.
+    if message == hass.birthPayload:
+      for url in nordnetapi.urls:
+        let
+          name    = split(url, "-")[1].capitalizeAscii()
+          nameRaw = split(url, "-")[1]
+        waitFor ctx.publish(discoveryTopic & nameRaw & "/config", discovery.format(nameRaw, name), 0, true)
+
+  if hass.autoDiscover:
+    await ctx.subscribe(hass.birthTopic, 0, rediscoverOnHassRestart)
+
   for url in nordnetapi.urls:
-    await apiGetData(ctx, url, mqttInfo.autodiscover)
+    await apiGetData(ctx, url, hass.autoDiscover)
     await sleepAsync(nordnetapi.wait * 1000)
 
   while true:
