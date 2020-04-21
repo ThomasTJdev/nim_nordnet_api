@@ -205,15 +205,18 @@ proc nordnetJson*(nn: Nordnet): JsonNode =
   return json
 
 
-proc apiGetData(ctx: MqttCtx, url: string, autoDiscover=false) {.async.} =
-
+proc apiDiscover(ctx: MqttCtx, url: string) {.async.} =
   let
     name    = split(url, "-")[1].capitalizeAscii()
     nameRaw = split(url, "-")[1]
 
-  if autoDiscover:
-    await ctx.publish(discoveryTopic & nameRaw & "/config", discovery.format(nameRaw, name), 0, true)
-    await sleepAsync(1000)
+  await ctx.publish(discoveryTopic & nameRaw & "/config", discovery.format(nameRaw, name), 0, true)
+
+
+proc apiGetData(ctx: MqttCtx, url: string, autoDiscover: bool) {.async.} =
+  let
+    name    = split(url, "-")[1].capitalizeAscii()
+    nameRaw = split(url, "-")[1]
 
   let nn = nordnetData(name, url)
 
@@ -255,13 +258,14 @@ proc apiRun*() {.async.} =
     await ctx.subscribe(hass.birthTopic, 0, rediscoverOnHassRestart)
 
   for url in nordnetapi.urls:
+    await apiDiscover(ctx, url)
     await apiGetData(ctx, url, hass.autoDiscover)
     await sleepAsync(nordnetapi.wait * 1000)
 
   while true:
     await sleepAsync(nordnetapi.refresh * 1000)
     for url in nordnetapi.urls:
-      await apiGetData(ctx, url)
+      await apiGetData(ctx, url, hass.autoDiscover)
       await sleepAsync(nordnetapi.wait * 1000)
 
   await ctx.disconnect()
